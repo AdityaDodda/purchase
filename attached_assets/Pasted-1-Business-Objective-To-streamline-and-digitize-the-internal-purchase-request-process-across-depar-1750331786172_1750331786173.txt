@@ -1,0 +1,150 @@
+1. Business Objective
+To streamline and digitize the internal purchase request process across departments and locations by enabling users to raise requests, track them, and receive timely approvals with escalation handling — all within a centralized and intuitive web application. the client is KANDHARI GLOBAL BEVERAGES - please search the internet and use their color combination
+
+2. Functional Requirements
+A. User Authentication
+✅ Login Page
+
+Input fields: Employee Number, Password
+
+Password reset option
+
+Authentication validation
+
+✅ Signup Page
+
+Input fields: Employee Number, Full Name, Email, Mobile, Department, Location, Password
+
+Employee number must be unique
+
+Email confirmation / OTP validation (optional for mock)
+
+B. Purchase Request Form
+Auto-populate Requisition Number (hidden from user)
+
+Fields:
+
+Request Title
+
+Request Date (default: today's date)
+
+Department (dropdown)
+
+Location (dropdown)
+
+Business Justification Code (dropdown or searchable)
+
+Business Justification Details (textarea)
+
+C. Line Items
+Fields per item:
+
+Item Name (autocomplete or dropdown)
+
+Required Quantity
+
+Unit of Measure (dropdown)
+
+Required By Date
+
+Delivery Location
+
+Estimated Cost
+
+Item Justification
+
+Real-time stock visibility (display below item or as a pop-up)
+
+D. Attachments
+Support upload of:
+
+DPR (Detailed Project Report)
+
+Quotations
+
+Technical Documents
+
+Allowed formats: PDF, Word, Excel, Images
+
+3. Approval Workflow
+Approver auto-selected based on Department & Location logic
+
+Approval Actions: Approve, Reject, Return, Cancel
+
+Multi-level Sequential Approval based on configuration
+
+Escalation Matrix:
+
+Pre-configured based on delay durations
+
+Auto-triggered mails/reminders if action not taken within set timeframe
+
+Email Notifications:
+
+On Request Submission
+
+On Approval/Reject/Return
+
+On Escalation
+
+4. Dashboards
+A. Admin Dashboard
+View all requests filtered by:
+
+Status (Submitted, Pending, Returned, Approved, Rejected)
+
+Department
+
+Location
+
+Time Range
+
+Export option (PDF/Excel)
+
+B. User Dashboard
+Display only user-specific requests
+
+Submitted
+
+Pending
+
+In Progress
+
+Approved
+
+Rejected
+
+Status tags with color-coding
+
+5. User Roles
+Role	Access Rights
+Requester	Create, view, and track their own requests
+Approver	Approve/Reject/Return/Comment on requests assigned
+Admin	View all requests, configure logic, assign approvers
+
+6. UI/UX Considerations
+Clean, modern UI with step-wise form
+
+Confirmation before submission
+
+Tooltips for justification/help
+
+Responsive design for desktop/tablet/mobile
+
+7. Integrations & Mock Features
+No live database or email integration needed for mock
+
+Simulated stock availability
+
+Simulated approval routing logic
+
+Dummy data for users, approvers, departments, and items
+
+8. Non-Functional Requirements
+System should load within 3 seconds (mocked)
+
+Upload limit: 10 MB per attachment
+
+Form autosave (optional for mock)
+
+Requisition ID generation format: PR-[DeptCode]-[YYYYMM]-[AutoNo]

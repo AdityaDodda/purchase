@@ -1,0 +1,36 @@
+KGBPL Changes required
+
+1) First remove quick actions for both admin and normal user -- done
+2) Views for user and admin as Recent requests my pendings(default)
+3) next remove the requests tab encorporate in the dashboard itself -- removed in navbar but need to do in dashboard
+4) and for admin the admin tab dashboard features should be shown in when he logs in only
+5) comments and audit log
+6) repositioning and renaming of new tab
+7) add footer -- done
+8) line items cart format to grid format with validation to stock checking and edit and delete option also
+9) remove notification or add the feature
+10) add the export report feature in reports tab -- done
+
+Bangalore - Production Unit Finance
+
+Requester
+EMP002 password Sarah
+Approver
+Level 1 EMP009 password Ravi 
+Level 2 EMP011 password Rajesh
+
+Mumbai Head Office - IT
+
+Requester
+EMP004 password Lisa
+Approver
+Level 1 EMP008 password Priya
+Level 2 EMP010 password Saketh
+
+
+pagination
+date format
+logs
+approval matrix table in masters
+increase tabular width in the line-item-format
+currency , format
