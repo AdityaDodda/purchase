@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Download, Filter, X, Calendar, MapPin, Package, DollarSign } from "lucide-react";
-// import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
+import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
 
 import { Navbar } from "@/components/layout/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -508,11 +508,6 @@ export default function MyRequests() {
                   )}
                 </div>
 
-                {/* <CommentsAuditLog 
-                  purchaseRequestId={selectedRequest?.id || 0}
-                  canComment={true}
-                /> */}
-
                 <Separator />
 
                 {/* Progress Information */}
@@ -520,7 +515,8 @@ export default function MyRequests() {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Approval Progress</h3>
                     <ApprovalProgress request={selectedRequest} />
-                    <ApprovalAuditLog requestId={selectedRequest.id} />
+                    {/* Show Comments & Audit Log below approval progress only when viewing details */}
+                    <CommentsAuditLog purchaseRequestId={selectedRequest.id} />
                   </div>
                 )}
               </div>

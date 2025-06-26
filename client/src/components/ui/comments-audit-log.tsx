@@ -9,6 +9,13 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate } from "@/lib/utils";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { ApprovalHistory } from "@/lib/types";
 
 interface CommentsAuditLogProps {
   purchaseRequestId: number;
@@ -41,44 +48,30 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
   const [activeTab, setActiveTab] = useState<"comments" | "audit">("comments");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [openSections, setOpenSections] = useState<string[]>([]);
 
-  const { data: comments, isLoading: loadingComments } = useQuery({
-    queryKey: [`/api/purchase-requests/${purchaseRequestId}/comments`],
+  // Only fetch when either section is open
+  const shouldFetch = openSections.includes("comments") || openSections.includes("audit");
+
+  const { data: history, isLoading } = useQuery({
+    queryKey: [`/api/approval-history/${purchaseRequestId}`],
+    enabled: shouldFetch && !!purchaseRequestId,
   });
 
-  const { data: auditLog, isLoading: loadingAudit } = useQuery({
-    queryKey: [`/api/purchase-requests/${purchaseRequestId}/audit`],
-  });
-
-  const addCommentMutation = useMutation({
-    mutationFn: async (comment: string) => {
-      return apiRequest("POST", `/api/purchase-requests/${purchaseRequestId}/comments`, {
-        comment,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/purchase-requests/${purchaseRequestId}/comments`] 
-      });
-      setNewComment("");
-      toast({
-        title: "Comment added",
-        description: "Your comment has been added successfully.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add comment",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    addCommentMutation.mutate(newComment);
-  };
+  // Comments for next approver/requester: approvalLevel === 2, has comments
+  const comments = Array.isArray(history)
+    ? (history as ApprovalHistory[]).filter(
+        (h) =>
+          h.comments &&
+          h.comments.trim() !== "" &&
+          h.approvalLevel === 2
+      )
+    : [];
+  // Audit log: only 'approved' actions
+  const auditLog = Array.isArray(history)
+    ? (history as ApprovalHistory[]).filter((h) => h.action === "approved")
+    : [];
+  const safeHistory = Array.isArray(history) ? (history as ApprovalHistory[]) : [];
 
   const getActionColor = (action: string) => {
     switch (action.toLowerCase()) {
@@ -108,175 +101,61 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
   };
 
   return (
-    <Card>
+    <Card className="mt-6">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center">
-            <MessageSquare className="h-5 w-5 mr-2" />
-            Communication & Audit Trail
-          </CardTitle>
-          <div className="flex space-x-2">
-            <Button
-              variant={activeTab === "comments" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("comments")}
-            >
-              Comments ({Array.isArray(comments) ? comments.length : 0})
-            </Button>
-            <Button
-              variant={activeTab === "audit" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("audit")}
-            >
-              <History className="h-4 w-4 mr-1" />
-              Audit ({Array.isArray(auditLog) ? auditLog.length : 0})
-            </Button>
-          </div>
-        </div>
+        <CardTitle>Comments & Audit Log</CardTitle>
       </CardHeader>
       <CardContent>
-        {activeTab === "comments" ? (
-          <div className="space-y-4">
-            {/* Add New Comment */}
-            {canComment && (
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <Textarea
-                  placeholder="Add a comment..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={3}
-                  className="mb-3"
-                />
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleAddComment}
-                    disabled={!newComment.trim() || addCommentMutation.isPending}
-                    size="sm"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Comments List */}
-            <div className="space-y-4">
-              {loadingComments ? (
-                <div className="animate-pulse space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="border rounded-lg p-4">
-                      <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : Array.isArray(comments) && comments.length > 0 ? (
-                comments.map((comment: Comment) => {
-                  const { date, time } = formatDateTime(comment.createdAt);
-                  const isAdminComment = comment.userRole === 'admin' || comment.userRole === 'approver';
-                  const isActionComment = comment.type !== 'comment';
-                  
-                  return (
-                    <div key={comment.id} className={`border rounded-lg p-4 ${
-                      isAdminComment && isActionComment 
-                        ? 'border-red-200 bg-red-50' 
-                        : isAdminComment 
-                        ? 'border-blue-200 bg-blue-50' 
-                        : 'bg-white'
-                    }`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            isAdminComment ? 'bg-red-500' : 'bg-[hsl(207,90%,54%)]'
-                          }`}>
-                            <User className="h-4 w-4 text-white" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm">{comment.userName}</div>
-                            <div className="text-xs text-gray-500">{comment.userRole}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500">{date}</div>
-                          <div className="text-xs text-gray-500">{time}</div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-700">{comment.comment}</p>
-                      {comment.type !== "comment" && (
-                        <Badge className={`mt-2 ${getActionColor(comment.type)}`}>
-                          {comment.type.replace("_", " ").toUpperCase()}
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })
+        <Accordion
+          type="multiple"
+          className="w-full"
+          value={openSections}
+          onValueChange={setOpenSections}
+        >
+          <AccordionItem value="comments">
+            <AccordionTrigger>Comments for Next Approver/Requester</AccordionTrigger>
+            <AccordionContent>
+              {isLoading ? (
+                <div>Loading...</div>
+              ) : comments.length === 0 ? (
+                <div className="text-gray-500">No comments yet.</div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>No comments yet</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {loadingAudit ? (
-              <div className="animate-pulse space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="border rounded-lg p-4">
-                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                ))}
-              </div>
-            ) : Array.isArray(auditLog) && auditLog.length > 0 ? (
-              <div className="space-y-3">
-                {auditLog.map((entry: AuditEntry, index: number) => {
-                  const { date, time } = formatDateTime(entry.timestamp);
-                  return (
-                    <div key={entry.id} className="relative">
-                      {index !== auditLog.length - 1 && (
-                        <div className="absolute left-4 top-8 w-px h-8 bg-gray-200"></div>
-                      )}
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium text-sm">{entry.userName}</span>
-                              <Badge className={getActionColor(entry.action)}>
-                                {entry.action}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {date} at {time}
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">{entry.details}</p>
-                          {entry.oldValue && entry.newValue && (
-                            <div className="text-xs text-gray-500 mt-2">
-                              <span className="line-through">{entry.oldValue}</span>
-                              <span className="mx-2">→</span>
-                              <span className="font-medium">{entry.newValue}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                comments.map((c: ApprovalHistory) => (
+                  <div key={c.id} className="mb-4">
+                    <div className="font-medium">
+                      {c.approver?.employeeNumber} - {c.approver?.fullName || "Approver"}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <History className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No audit entries yet</p>
-              </div>
-            )}
-          </div>
-        )}
+                    <div className="text-xs text-gray-500 mb-1">
+                      {c.action} on {c.actionDate ? new Date(c.actionDate).toLocaleString() : ""}
+                    </div>
+                    <div className="bg-gray-50 border rounded p-2">{c.comments}</div>
+                  </div>
+                ))
+              )}
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="audit">
+            <AccordionTrigger>Audit Log</AccordionTrigger>
+            <AccordionContent>
+              {isLoading ? (
+                <div>Loading...</div>
+              ) : auditLog.length === 0 ? (
+                <div className="text-gray-500">No audit log yet.</div>
+              ) : (
+                auditLog.map((h: ApprovalHistory) => (
+                  <div key={h.id} className="mb-3">
+                    <div>
+                      <span className="font-medium">{h.approver?.employeeNumber} - {h.approver?.fullName || "Approver"}</span>{" "}
+                      <span className="text-xs text-gray-500">
+                        (approved at level {h.approvalLevel} on {h.actionDate ? new Date(h.actionDate).toLocaleString() : ""})
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );

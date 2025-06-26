@@ -44,7 +44,15 @@ export const purchaseRequests = pgTable("purchase_requests", {
   currentApprovalLevel: integer("current_approval_level").notNull().default(1),
   totalEstimatedCost: decimal("total_estimated_cost", { precision: 15, scale: 2 }).notNull().default("0"),
   requesterId: integer("requester_id").notNull().references(() => users.id),
+  
+  // --- INTERMEDIATE MIGRATION STEP ---
+  // Keep the old column (as nullable) to preserve data during migration.
   currentApproverId: integer("current_approver_id").references(() => users.id),
+  
+  // Add the new column (as nullable) so it can be added to existing tables.
+  currentApproverEmployeeNumber: varchar("current_approver_employee_number", { length: 50 })
+    .references(() => users.employeeNumber),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -81,8 +89,16 @@ export const attachments = pgTable("attachments", {
 export const approvalHistory = pgTable("approval_history", {
   id: serial("id").primaryKey(),
   purchaseRequestId: integer("purchase_request_id").notNull().references(() => purchaseRequests.id, { onDelete: "cascade" }),
-  approverId: integer("approver_id").notNull().references(() => users.id),
-  action: varchar("action", { length: 50 }).notNull(), // submit, approve, reject, return, resubmit, final_approve
+  
+  // --- INTERMEDIATE MIGRATION STEP ---
+  // Keep the old column (as nullable).
+  approverId: integer("approver_id").references(() => users.id),
+
+  // Add the new column (as nullable).
+  approverEmployeeNumber: varchar("approver_employee_number", { length: 50 })
+    .references(() => users.employeeNumber),
+  
+  action: varchar("action", { length: 50 }).notNull(),
   comments: text("comments"),
   approvalLevel: integer("approval_level").notNull(),
   actionDate: timestamp("action_date").defaultNow(),
@@ -94,7 +110,15 @@ export const approvalWorkflow = pgTable("approval_workflow", {
   department: varchar("department", { length: 100 }).notNull(),
   location: varchar("location", { length: 100 }).notNull(),
   approvalLevel: integer("approval_level").notNull(), // 1 or 2
-  approverId: integer("approver_id").notNull().references(() => users.id),
+
+  // --- INTERMEDIATE MIGRATION STEP ---
+  // Keep the old column (as nullable).
+  approverId: integer("approver_id").references(() => users.id),
+
+  // Add the new column (as nullable).
+  approverEmployeeNumber: varchar("approver_employee_number", { length: 50 })
+    .references(() => users.employeeNumber),
+
   isActive: boolean("is_active").notNull().default(true),
 });
 
@@ -123,9 +147,15 @@ export const purchaseRequestsRelations = relations(purchaseRequests, ({ one, man
     fields: [purchaseRequests.requesterId],
     references: [users.id],
   }),
+  // --- INTERMEDIATE MIGRATION STEP: Define relations for both keys ---
   currentApprover: one(users, {
+    fields: [purchaseRequests.currentApproverEmployeeNumber],
+    references: [users.employeeNumber],
+  }),
+  currentApproverById: one(users, { // Relation for the old key
     fields: [purchaseRequests.currentApproverId],
     references: [users.id],
+    relationName: 'currentApproverById'
   }),
   lineItems: many(lineItems),
   attachments: many(attachments),
@@ -152,16 +182,28 @@ export const approvalHistoryRelations = relations(approvalHistory, ({ one }) => 
     fields: [approvalHistory.purchaseRequestId],
     references: [purchaseRequests.id],
   }),
+  // --- INTERMEDIATE MIGRATION STEP: Define relations for both keys ---
   approver: one(users, {
+    fields: [approvalHistory.approverEmployeeNumber],
+    references: [users.employeeNumber],
+  }),
+  approverById: one(users, { // Relation for the old key
     fields: [approvalHistory.approverId],
     references: [users.id],
+    relationName: 'approverById'
   }),
 }));
 
 export const approvalWorkflowRelations = relations(approvalWorkflow, ({ one }) => ({
+  // --- INTERMEDIATE MIGRATION STEP: Define relations for both keys ---
   approver: one(users, {
+    fields: [approvalWorkflow.approverEmployeeNumber],
+    references: [users.employeeNumber],
+  }),
+  approverById: one(users, { // Relation for the old key
     fields: [approvalWorkflow.approverId],
     references: [users.id],
+    relationName: 'workflowApproverById'
   }),
 }));
 
@@ -177,6 +219,7 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 }));
 
 // Master Data Tables for Admin System
+// ... (The rest of the file is unchanged) ...
 
 // Entity Master
 export const entities = pgTable("entities", {

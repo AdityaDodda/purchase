@@ -42,8 +42,8 @@ INSERT INTO roles (name, code, description, permissions, hierarchy_level, report
 -- Approval Matrix with approver employee number and name
 INSERT INTO approval_matrix (department, location, level, approver_employee_number, approver_name, min_amount, max_amount, is_active)
 VALUES
-('Production', 'Mumbai Head Office', 1, 'EMP1001', 'Priya Approver', 0, 50000, true),
-('Production', 'Mumbai Head Office', 2, 'EMP1002', 'Ravi Approver', 50001, 200000, true),
+('Production', 'Mumbai Head Office', 1, 'EMP008', 'Priya', 0, 50000, true),
+('Production', 'Mumbai Head Office', 2, 'EMP009', 'Ravi', 50001, 200000, true),
 ('Quality Control', 'Bangalore Production Unit', 1, 'EMP1003', 'Amit Kumar', 0, 25000, true),
 ('Quality Control', 'Bangalore Production Unit', 2, 'EMP1004', 'Sunita Reddy', 25001, 100000, true),
 ('Production', 'Mumbai Head Office', 200001, 500000, 'GRPADM', 3, true, 5),

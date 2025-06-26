@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLocation } from "wouter";
 import { LineItemsGrid } from "@/components/ui/line-items-grid";
-// import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
+import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -516,6 +516,14 @@ export default function AdminDashboard() {
         {/* Detailed View Modal */}
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
           {/* ...dialog content... */}
+          {selectedRequest && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Approval Progress</h3>
+              <ApprovalProgress request={selectedRequest} />
+              {/* Show Comments & Audit Log below approval progress only when viewing details */}
+              <CommentsAuditLog purchaseRequestId={selectedRequest.id} />
+            </div>
+          )}
         </Dialog>
       </div>
     </div>

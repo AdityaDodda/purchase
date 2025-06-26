@@ -20,7 +20,7 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
-// import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
+import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
 
 type User = {
   id: string;
@@ -365,10 +365,7 @@ export default function Dashboard() {
                 <Separator />
 
                 {/* Comments and Audit Log */}
-                {/* <CommentsAuditLog 
-                  purchaseRequestId={selectedRequest?.id} 
-                  canComment={true}
-                /> */}
+                <CommentsAuditLog purchaseRequestId={selectedRequest?.id} />
 
                 {/* Progress Information */}
                 {selectedRequest && (
@@ -415,7 +412,7 @@ function ApprovalProgress({ request }) {
     queryKey: ["/api/approval-workflow", request.department, request.location],
     enabled: !!request,
   });
-  const maxLevel = workflow?.length || 2;
+  const maxLevel = Array.isArray(workflow) ? workflow.length : 2;
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
@@ -432,9 +429,9 @@ function ApprovalProgress({ request }) {
           style={{ width: `${(request.currentApprovalLevel / maxLevel) * 100}%` }}
         />
       </div>
-      {workflow && (
+      {Array.isArray(workflow) && (
         <div className="mt-2 space-y-1">
-          {workflow.map((level, idx) => (
+          {workflow.map((level: any, idx: number) => (
             <div key={level.approvalLevel} className="flex items-center text-sm">
               <span className="font-medium mr-2">Level {level.approvalLevel}:</span>
               <span>{level.approver.fullName} ({level.approver.email})</span>
@@ -448,7 +445,7 @@ function ApprovalProgress({ request }) {
           ))}
         </div>
       )}
-      <p className="text-sm text-gray-600 mt-2">
+      <p className="text-xs text-gray-500 mt-2">
         {request.status === "approved" 
           ? "Request approved - Procurement in progress" 
           : request.status === "rejected"
@@ -461,20 +458,21 @@ function ApprovalProgress({ request }) {
   );
 }
 
-function ApprovalAuditLog({ requestId }) {
+function ApprovalAuditLog({ requestId }: { requestId: number }) {
   const { data: history } = useQuery({
     queryKey: ["/api/approval-history", requestId],
     enabled: !!requestId,
   });
+  const safeHistory = Array.isArray(history) ? history : [];
   if (!history) return null;
   return (
     <div className="mt-6">
       <h4 className="font-semibold text-gray-800 mb-2">Approval Audit Log</h4>
       <div className="bg-white border rounded p-2 text-sm">
-        {history.length === 0 ? (
+        {safeHistory.length === 0 ? (
           <div className="text-gray-500">No actions yet.</div>
         ) : (
-          history.map((entry, idx) => (
+          safeHistory.map((entry: any, idx: number) => (
             <div key={idx} className="flex items-center justify-between border-b last:border-b-0 py-1">
               <span>{entry.action} by {entry.approver?.fullName || 'User'} (Level {entry.approvalLevel})</span>
               <span className="text-gray-500">{new Date(entry.actionDate).toLocaleString()}</span>

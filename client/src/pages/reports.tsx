@@ -20,6 +20,7 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
+import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
 
 import { DEPARTMENTS, LOCATIONS, REQUEST_STATUSES } from "@/lib/constants";
 
@@ -566,6 +567,15 @@ const filteredRequests = Array.isArray(requests)
                     )}
                   </div>
                 </div>
+
+                {selectedRequest && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Approval Progress</h3>
+                    <ApprovalProgress request={selectedRequest} />
+                    {/* Show Comments & Audit Log below approval progress only when viewing details */}
+                    <CommentsAuditLog purchaseRequestId={selectedRequest.id} />
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
