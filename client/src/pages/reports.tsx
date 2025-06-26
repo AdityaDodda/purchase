@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Download, Filter, Calendar, Users, MapPin, Building, FileText, Eye } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -12,6 +12,14 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 import { DEPARTMENTS, LOCATIONS, REQUEST_STATUSES } from "@/lib/constants";
 
@@ -27,6 +35,8 @@ export default function Reports() {
   });
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["/api/reports/purchase-requests", filters],
@@ -132,6 +142,10 @@ const filteredRequests = Array.isArray(requests)
       return true;
     })
   : [];
+
+  useEffect(() => {
+    setPage(1);
+  }, [filteredRequests]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -341,7 +355,7 @@ const filteredRequests = Array.isArray(requests)
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredRequests.length > 0 ? (
-                      filteredRequests.map((request: any) => (
+                      filteredRequests.slice((page - 1) * pageSize, page * pageSize).map((request: any) => (
                         <tr key={request.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {request.requisitionNumber}
@@ -393,6 +407,38 @@ const filteredRequests = Array.isArray(requests)
             )}
           </CardContent>
         </Card>
+
+        {/* Pagination Controls */}
+        {filteredRequests.length > pageSize && (
+          <div className="mt-4 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    aria-disabled={page === 1}
+                  />
+                </PaginationItem>
+                {[...Array(Math.ceil(filteredRequests.length / pageSize))].map((_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      isActive={page === i + 1}
+                      onClick={() => setPage(i + 1)}
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPage(p => Math.min(Math.ceil(filteredRequests.length / pageSize), p + 1))}
+                    aria-disabled={page === Math.ceil(filteredRequests.length / pageSize)}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
 
         {/* Detailed View Modal */}
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>

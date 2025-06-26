@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, Clock, CheckCircle, XCircle, Package, Calendar, MapPin, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,14 @@ import { useLocation } from "wouter";
 import { LineItemsGrid } from "@/components/ui/line-items-grid";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useQuery as useUserQuery } from "@tanstack/react-query";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 // import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
 
 type User = {
@@ -24,6 +32,8 @@ export default function Dashboard() {
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [activeView, setActiveView] = useState<'my' | 'approver' | 'pending' | 'all'>('my');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const { data: stats } = useQuery({
     queryKey: ["/api/dashboard/stats"],
@@ -50,6 +60,11 @@ export default function Dashboard() {
     queryKey: [`/api/purchase-requests/${selectedRequest?.id}/details`],
     enabled: !!selectedRequest?.id,
   });
+
+  // Reset page to 1 when requests data changes
+  useEffect(() => {
+    setPage(1);
+  }, [requests]);
 
   const handleViewDetails = (request: any) => {
     setSelectedRequest(request);
@@ -168,51 +183,53 @@ export default function Dashboard() {
                       </td>
                     </tr>
                   ) : Array.isArray(requests) && requests.length > 0 ? (
-                    requests.map((request: any) => (
-                      <tr key={request.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {request.requisitionNumber}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {request.title}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {request.department}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={request.status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(request.requestDate)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-[hsl(207,90%,54%)]"
-                              onClick={() => handleViewDetails(request)}
-                            >
-                              View
-                            </Button>
-                            {request.status === 'returned' && (
+                    requests
+                      .slice((page - 1) * pageSize, page * pageSize)
+                      .map((request: any) => (
+                        <tr key={request.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {request.requisitionNumber}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {request.title}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {request.department}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <StatusBadge status={request.status} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(request.requestDate)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex space-x-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-orange-600"
+                                className="text-[hsl(207,90%,54%)]"
+                                onClick={() => handleViewDetails(request)}
                               >
-                                Resubmit
+                                View
                               </Button>
-                            )}
-                            {(request.status === 'submitted' || request.status === 'returned') && (
-                              <Button variant="ghost" size="sm">
-                                Edit
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                              {request.status === 'returned' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-orange-600"
+                                >
+                                  Resubmit
+                                </Button>
+                              )}
+                              {(request.status === 'submitted' || request.status === 'returned') && (
+                                <Button variant="ghost" size="sm">
+                                  Edit
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
@@ -223,6 +240,37 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+            {/* Pagination Controls */}
+            {Array.isArray(requests) && requests.length > pageSize && (
+              <div className="mt-4 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        aria-disabled={page === 1}
+                      />
+                    </PaginationItem>
+                    {[...Array(Math.ceil(requests.length / pageSize))].map((_, i) => (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          isActive={page === i + 1}
+                          onClick={() => setPage(i + 1)}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setPage(p => Math.min(Math.ceil(requests.length / pageSize), p + 1))}
+                        aria-disabled={page === Math.ceil(requests.length / pageSize)}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
 

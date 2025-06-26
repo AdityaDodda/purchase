@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Users, Building, MapPin, Shield, Settings, Package, Truck, 
@@ -17,6 +17,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest1 } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 type MasterType = 'users' | 'entities' | 'departments' | 'locations' | 'roles' | 'approval-matrix' | 'escalation-matrix' | 'inventory' | 'vendors';
 
@@ -255,6 +263,13 @@ export default function AdminMasters() {
 
 // Master Table Components
 function UsersMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Users Master"
@@ -287,6 +302,13 @@ function UsersMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, se
 }
 
 function EntityMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Entity Master"
@@ -314,6 +336,13 @@ function EntityMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, s
 }
 
 function DepartmentMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Department Master"
@@ -342,6 +371,13 @@ function DepartmentMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuer
 }
 
 function LocationMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Location Master"
@@ -371,6 +407,13 @@ function LocationMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery,
 }
 
 function RoleMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Role Master"
@@ -412,6 +455,13 @@ function RoleMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, set
 }
 
 function ApprovalMatrix({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Approval Matrix"
@@ -441,6 +491,13 @@ function ApprovalMatrix({ data, isLoading, onEdit, onDelete, onAdd, searchQuery,
 }
 
 function EscalationMatrix({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Escalation Matrix"
@@ -470,6 +527,13 @@ function EscalationMatrix({ data, isLoading, onEdit, onDelete, onAdd, searchQuer
 }
 
 function InventoryMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Inventory Master"
@@ -499,6 +563,13 @@ function InventoryMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery
 }
 
 function VendorMaster({ data, isLoading, onEdit, onDelete, onAdd, searchQuery, setSearchQuery }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <MasterTable
       title="Vendor Master"
@@ -541,6 +612,13 @@ function MasterTable({
   searchQuery, 
   setSearchQuery 
 }: any) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [data]);
+
   return (
     <Card>
       <CardHeader>
@@ -592,7 +670,7 @@ function MasterTable({
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {data.length > 0 ? (
-                  data.map((item: any) => (
+                  data.slice((page - 1) * pageSize, page * pageSize).map((item: any) => (
                     <tr key={item.id} className="hover:bg-gray-50">
                       {columns.map((column: any) => (
                         <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -630,6 +708,37 @@ function MasterTable({
                 )}
               </tbody>
             </table>
+            {/* Pagination Controls */}
+            {data.length > pageSize && (
+              <div className="mt-4 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        aria-disabled={page === 1}
+                      />
+                    </PaginationItem>
+                    {[...Array(Math.ceil(data.length / pageSize))].map((_, i) => (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          isActive={page === i + 1}
+                          onClick={() => setPage(i + 1)}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setPage(p => Math.min(Math.ceil(data.length / pageSize), p + 1))}
+                        aria-disabled={page === Math.ceil(data.length / pageSize)}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

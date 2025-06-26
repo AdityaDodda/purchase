@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Download, Filter, TrendingUp, Clock, DollarSign, BarChart3, Package, Calendar, MapPin, Database } from "lucide-react";
 import qs from "query-string";
@@ -19,6 +19,14 @@ import { LineItemsGrid } from "@/components/ui/line-items-grid";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -39,6 +47,8 @@ export default function AdminDashboard() {
   const [selectedRequests, setSelectedRequests] = useState<number[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const { data: stats } = useQuery({
     queryKey: ["/api/dashboard/stats"],
@@ -70,6 +80,10 @@ export default function AdminDashboard() {
     queryKey: [`/api/purchase-requests/${selectedRequest?.id}/details`],
     enabled: !!selectedRequest,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [requests]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilterForm((prev) => ({ ...prev, [key]: value }));
@@ -386,7 +400,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {Array.isArray(requests) && requests.length > 0 ? (
-                    requests.map((request: any) => (
+                    requests.slice((page - 1) * pageSize, page * pageSize).map((request: any) => (
                       <tr key={request.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Checkbox
@@ -462,6 +476,38 @@ export default function AdminDashboard() {
             {selectedRequests.length > 0 && (
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 {/* ...bulk actions... */}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {Array.isArray(requests) && requests.length > pageSize && (
+              <div className="mt-4 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        aria-disabled={page === 1}
+                      />
+                    </PaginationItem>
+                    {[...Array(Math.ceil(requests.length / pageSize))].map((_, i) => (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          isActive={page === i + 1}
+                          onClick={() => setPage(i + 1)}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setPage(p => Math.min(Math.ceil(requests.length / pageSize), p + 1))}
+                        aria-disabled={page === Math.ceil(requests.length / pageSize)}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </CardContent>

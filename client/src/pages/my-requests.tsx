@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Download, Filter, X, Calendar, MapPin, Package, DollarSign } from "lucide-react";
 // import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
@@ -14,6 +14,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLocation } from "wouter";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 export default function MyRequests() {
   const [, setLocation] = useLocation();
@@ -24,6 +32,8 @@ export default function MyRequests() {
   });
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["/api/purchase-requests", filters],
@@ -33,6 +43,10 @@ export default function MyRequests() {
     queryKey: [`/api/purchase-requests/${selectedRequest?.id}/details`],
     enabled: !!selectedRequest,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [requests]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -204,7 +218,7 @@ export default function MyRequests() {
           <CardContent>
             <div className="space-y-4">
               {Array.isArray(requests) && requests.length > 0 ? (
-                requests.map((request: any) => (
+                requests.slice((page - 1) * pageSize, page * pageSize).map((request: any) => (
                   <div key={request.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
@@ -297,6 +311,38 @@ export default function MyRequests() {
                     <Plus className="h-4 w-4 mr-2" />
                     Create Your First Request
                   </Button>
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {Array.isArray(requests) && requests.length > pageSize && (
+                <div className="mt-4 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          aria-disabled={page === 1}
+                        />
+                      </PaginationItem>
+                      {[...Array(Math.ceil(requests.length / pageSize))].map((_, i) => (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            isActive={page === i + 1}
+                            onClick={() => setPage(i + 1)}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setPage(p => Math.min(Math.ceil(requests.length / pageSize), p + 1))}
+                          aria-disabled={page === Math.ceil(requests.length / pageSize)}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </div>
