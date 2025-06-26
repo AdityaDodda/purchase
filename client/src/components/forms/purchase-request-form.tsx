@@ -20,7 +20,45 @@ import { DEPARTMENTS, LOCATIONS, BUSINESS_JUSTIFICATION_CODES, UNITS_OF_MEASURE 
 import { LineItemsGrid } from "@/components/ui/line-items-grid";
 import { FileUpload } from "@/components/ui/file-upload";
 import type { LineItemFormData } from "@/lib/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+
+// Indian currency formatting function
+const formatIndianCurrency = (amount: number | string) => {
+  if (!amount && amount !== 0) return "₹0.00";
+  
+  const num = parseFloat(amount.toString());
+  if (isNaN(num)) return "₹0.00";
+  
+  // Convert to string with 2 decimal places
+  const numStr = num.toFixed(2);
+  const [integer, decimal] = numStr.split('.');
+  
+  // Indian number system formatting
+  let formatted = '';
+  const integerStr = integer;
+  
+  if (integerStr.length <= 3) {
+    formatted = integerStr;
+  } else {
+    // First 3 digits from right
+    let result = integerStr.slice(-3);
+    let remaining = integerStr.slice(0, -3);
+    
+    // Add commas every 2 digits for the remaining part
+    while (remaining.length > 0) {
+      if (remaining.length <= 2) {
+        result = remaining + ',' + result;
+        break;
+      } else {
+        result = remaining.slice(-2) + ',' + result;
+        remaining = remaining.slice(0, -2);
+      }
+    }
+    formatted = result;
+  }
+  
+  return `₹${formatted}.${decimal}`;
+};
 
 const requestDetailsSchema = z.object({
   title: z.string().min(1, "Request title is required"),
@@ -345,22 +383,22 @@ export function PurchaseRequestForm({ currentStep, onStepChange, onSubmit, initi
               {/* Request Summary */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">Request Summary</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Title:</span>
-                    <span className="font-medium ml-2">{getValues("title")}</span>
+                    <span className="block text-gray-500">Title</span>
+                    <span className="font-medium text-gray-900">{getValues("title")}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Request Date:</span>
-                    <span className="font-medium ml-2">{formatDate(getValues("requestDate"))}</span>
+                    <span className="block text-gray-500">Request Date</span>
+                    <span className="font-medium text-gray-900">{formatDate(getValues("requestDate"))}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Department:</span>
-                    <span className="font-medium ml-2">{getValues("department")}</span>
+                    <span className="block text-gray-500">Department</span>
+                    <span className="font-medium text-gray-900">{getValues("department")}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Location:</span>
-                    <span className="font-medium ml-2">{getValues("location")}</span>
+                    <span className="block text-gray-500">Location</span>
+                    <span className="font-medium text-gray-900">{getValues("location")}</span>
                   </div>
                 </div>
               </div>
@@ -381,8 +419,10 @@ export function PurchaseRequestForm({ currentStep, onStepChange, onSubmit, initi
                       <span>{item.itemName}</span>
                       <span>{item.requiredQuantity}</span>
                       <span>{item.unitOfMeasure}</span>
-                      <span>{formatCurrency(item.estimatedCost)}</span>
-                      <span className="font-semibold text-green-600">{formatCurrency((item.requiredQuantity || 0) * (parseFloat(item.estimatedCost?.toString() || '0')))}</span>
+                      <span>{formatIndianCurrency(item.estimatedCost)}</span>
+                      <span className="font-semibold text-green-600">
+                        {formatIndianCurrency((item.requiredQuantity || 0) * (parseFloat(item.estimatedCost?.toString() || '0')))}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -393,7 +433,7 @@ export function PurchaseRequestForm({ currentStep, onStepChange, onSubmit, initi
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Estimated Cost</h3>
                   <div className="text-3xl font-bold text-green-700">
-                    {formatCurrency(lineItems.reduce((sum, item) => {
+                    {formatIndianCurrency(lineItems.reduce((sum, item) => {
                       const itemTotal = (item.requiredQuantity || 0) * (parseFloat(item.estimatedCost?.toString() || '0'));
                       return sum + itemTotal;
                     }, 0))}

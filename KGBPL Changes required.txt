@@ -29,8 +29,8 @@ Level 2 EMP010 password Saketh
 
 
 pagination
-date format
+date format 
 logs
 approval matrix table in masters
-increase tabular width in the line-item-format
-currency , format
+increase tabular width in the line-item-format -- done
+currency , format -- done

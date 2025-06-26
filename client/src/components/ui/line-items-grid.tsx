@@ -182,6 +182,34 @@ export function LineItemsGrid({ items, onItemsChange, editable = true }: LineIte
     return sum + itemTotal;
   }, 0);
 
+  // Indian currency formatting function (copied from purchase-request-form.tsx)
+  const formatIndianCurrency = (amount: number | string) => {
+    if (!amount && amount !== 0) return "₹0.00";
+    const num = parseFloat(amount.toString());
+    if (isNaN(num)) return "₹0.00";
+    const numStr = num.toFixed(2);
+    const [integer, decimal] = numStr.split('.');
+    let formatted = '';
+    const integerStr = integer;
+    if (integerStr.length <= 3) {
+      formatted = integerStr;
+    } else {
+      let result = integerStr.slice(-3);
+      let remaining = integerStr.slice(0, -3);
+      while (remaining.length > 0) {
+        if (remaining.length <= 2) {
+          result = remaining + ',' + result;
+          break;
+        } else {
+          result = remaining.slice(-2) + ',' + result;
+          remaining = remaining.slice(0, -2);
+        }
+      }
+      formatted = result;
+    }
+    return `₹${formatted}.${decimal}`;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -377,13 +405,14 @@ export function LineItemsGrid({ items, onItemsChange, editable = true }: LineIte
       ) : (
         <Card>
           <CardContent className="p-0">
-            {/* Excel-style table */}
+            {/* The overflow-x-auto is kept for responsiveness on very small screens */}
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="text-left p-3 font-semibold text-sm border-r">#</th>
-                    <th className="text-left p-3 font-semibold text-sm border-r min-w-[200px]">Item Name</th>
+                    {/* MODIFICATION: Removed min-w-[200px] to allow column to be flexible */}
+                    <th className="text-left p-3 font-semibold text-sm border-r">Item Name</th>
                     <th className="text-left p-3 font-semibold text-sm border-r">Qty</th>
                     <th className="text-left p-3 font-semibold text-sm border-r">Unit</th>
                     <th className="text-left p-3 font-semibold text-sm border-r">Required By</th>
@@ -398,10 +427,11 @@ export function LineItemsGrid({ items, onItemsChange, editable = true }: LineIte
                   {items.map((item, index) => (
                     <tr key={item.id || index} className="border-b hover:bg-gray-50">
                       <td className="p-3 border-r text-sm font-medium">{index + 1}</td>
+                      {/* MODIFICATION: Added break-words and whitespace-normal to allow text to wrap */}
                       <td className="p-3 border-r">
-                        <div className="font-medium text-sm">{item.itemName}</div>
+                        <div className="font-medium text-sm break-words">{item.itemName}</div>
                         {item.itemJustification && (
-                          <div className="text-xs text-gray-500 mt-1 max-w-xs truncate" title={item.itemJustification}>
+                          <div className="text-xs text-gray-500 mt-1 whitespace-normal" title={item.itemJustification}>
                             {item.itemJustification}
                           </div>
                         )}
@@ -457,7 +487,7 @@ export function LineItemsGrid({ items, onItemsChange, editable = true }: LineIte
                       Total Estimated Cost:
                     </td>
                     <td className="p-3 border-r font-bold text-lg text-green-700">
-                      {formatCurrency(totalCost)}
+                      {formatIndianCurrency(totalCost)}
                     </td>
                     <td className="p-3 border-r"></td>
                     {editable && <td className="p-3"></td>}

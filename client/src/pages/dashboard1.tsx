@@ -67,6 +67,9 @@ export default function Dashboard() {
           <p className="text-gray-600">Manage and track your purchase requests efficiently</p>
         </div>
 
+        {/* Tabs */}
+        <CardHeader />
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-l-4 border-l-[hsl(207,90%,54%)]">
@@ -128,14 +131,25 @@ export default function Dashboard() {
 
         {/* My Requests Table */}
         <Card>
-          <CardContent>
-            <div className="flex space-x-2 mt-6 mb-4">
-              <Button variant={activeView === 'my' ? 'default' : 'outline'} onClick={() => setActiveView('my')}>My Requests</Button>
-              {user?.role === 'approver' && (
-                <Button variant={activeView === 'approver' ? 'default' : 'outline'} onClick={() => setActiveView('approver')}>Approver Inbox</Button>
-              )}
-              <Button variant={activeView === 'pending' ? 'default' : 'outline'} onClick={() => setActiveView('pending')}>Pending Requests</Button>
+          {/* <CardHeader>
+            <div className="flex space-x-2">
+              <Button
+                variant={activeView === 'pending' ? 'default' : 'outline'}
+                className={activeView === 'pending' ? "bg-[hsl(207,90%,54%)] hover:bg-[hsl(211,100%,29%)]" : ""}
+                onClick={() => setActiveView('pending')}
+              >
+                Pending Requests
+              </Button>
+              <Button
+                variant={activeView === 'all' ? 'default' : 'outline'}
+                className={activeView === 'all' ? "bg-[hsl(207,90%,54%)] hover:bg-[hsl(211,100%,29%)]" : ""}
+                onClick={() => setActiveView('all')}
+              >
+                All My Requests
+              </Button>
             </div>
+          </CardHeader> */}
+          <CardContent>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -222,6 +236,34 @@ export default function Dashboard() {
                   )}
                 </tbody>
               </table>
+            </div>
+            <div className="flex space-x-2 mt-4">
+              <Button
+                variant={activeView === 'my' ? 'default' : 'outline'}
+                onClick={() => setActiveView('my')}
+              >
+                My Requests
+              </Button>
+              {user?.role === 'approver' && (
+                <Button
+                  variant={activeView === 'approver' ? 'default' : 'outline'}
+                  onClick={() => setActiveView('approver')}
+                >
+                  Approver Inbox
+                </Button>
+              )}
+              <Button
+                variant={activeView === 'pending' ? 'default' : 'outline'}
+                onClick={() => setActiveView('pending')}
+              >
+                Pending Requests
+              </Button>
+              {/* <Button
+                variant={activeView === 'all' ? 'default' : 'outline'}
+                onClick={() => setActiveView('all')}
+              >
+                All My Requests
+              </Button> */}
             </div>
           </CardContent>
         </Card>

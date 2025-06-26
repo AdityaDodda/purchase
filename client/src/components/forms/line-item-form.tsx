@@ -28,6 +28,34 @@ interface LineItemFormProps {
   onAddItem: (item: LineItemFormData) => void;
 }
 
+// Indian currency formatting function (copied from purchase-request-form.tsx)
+const formatIndianCurrency = (amount: number | string) => {
+  if (!amount && amount !== 0) return "₹0.00";
+  const num = parseFloat(amount.toString());
+  if (isNaN(num)) return "₹0.00";
+  const numStr = num.toFixed(2);
+  const [integer, decimal] = numStr.split('.');
+  let formatted = '';
+  const integerStr = integer;
+  if (integerStr.length <= 3) {
+    formatted = integerStr;
+  } else {
+    let result = integerStr.slice(-3);
+    let remaining = integerStr.slice(0, -3);
+    while (remaining.length > 0) {
+      if (remaining.length <= 2) {
+        result = remaining + ',' + result;
+        break;
+      } else {
+        result = remaining.slice(-2) + ',' + result;
+        remaining = remaining.slice(0, -2);
+      }
+    }
+    formatted = result;
+  }
+  return `₹${formatted}.${decimal}`;
+};
+
 export function LineItemForm({ onAddItem }: LineItemFormProps) {
   const [open, setOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<number | null>(null);
