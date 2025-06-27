@@ -24,6 +24,8 @@ import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
 import { ApprovalProgress } from "./my-requests";
 
 import { DEPARTMENTS, LOCATIONS, REQUEST_STATUSES } from "@/lib/constants";
+import { Calendar as UiCalendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 export default function Reports() {
   const [filters, setFilters] = useState({
@@ -39,6 +41,8 @@ export default function Reports() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [calendarOpenStart, setCalendarOpenStart] = useState(false);
+  const [calendarOpenEnd, setCalendarOpenEnd] = useState(false);
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["/api/reports/purchase-requests", filters],
@@ -149,6 +153,23 @@ const filteredRequests = Array.isArray(requests)
     setPage(1);
   }, [filteredRequests]);
 
+  // Helper to parse dd-mm-yyyy to Date
+  function parseDDMMYYYY(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const [day, month, year] = dateStr.split("-");
+    if (!day || !month || !year) return null;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  // Helper to format Date to dd-mm-yyyy
+  function formatToDDMMYYYY(date: Date | null): string {
+    if (!date) return "";
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -173,21 +194,59 @@ const filteredRequests = Array.isArray(requests)
               {/* Date Range */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Start Date</label>
-                <Input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) => handleFilterChange("startDate", e.target.value)}
-                  className="w-full"
-                />
+                <Popover open={calendarOpenStart} onOpenChange={setCalendarOpenStart}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full border rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onClick={() => setCalendarOpenStart(true)}
+                    >
+                      {filters.startDate
+                        ? formatDate(filters.startDate)
+                        : <span className="text-gray-400">Select date</span>}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="p-0 w-auto">
+                    <UiCalendar
+                      mode="single"
+                      selected={parseDDMMYYYY(filters.startDate)}
+                      onSelect={(date) => {
+                        handleFilterChange("startDate", formatToDDMMYYYY(date));
+                        setCalendarOpenStart(false);
+                      }}
+                      fromDate={new Date(2000, 0, 1)}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-xs text-gray-500 mt-1">Format: dd-mm-yyyy</p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">End Date</label>
-                <Input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) => handleFilterChange("endDate", e.target.value)}
-                  className="w-full"
-                />
+                <Popover open={calendarOpenEnd} onOpenChange={setCalendarOpenEnd}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full border rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onClick={() => setCalendarOpenEnd(true)}
+                    >
+                      {filters.endDate
+                        ? formatDate(filters.endDate)
+                        : <span className="text-gray-400">Select date</span>}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="p-0 w-auto">
+                    <UiCalendar
+                      mode="single"
+                      selected={parseDDMMYYYY(filters.endDate)}
+                      onSelect={(date) => {
+                        handleFilterChange("endDate", formatToDDMMYYYY(date));
+                        setCalendarOpenEnd(false);
+                      }}
+                      fromDate={new Date(2000, 0, 1)}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-xs text-gray-500 mt-1">Format: dd-mm-yyyy</p>
               </div>
 
               {/* Status Filter */}

@@ -33,16 +33,29 @@ export function formatDate(date: Date | string | number | null | undefined): str
   if (!date) {
     return 'N/A'
   }
-  
-  const dateObj = new Date(date)
+
+  let dateObj: Date;
+  if (typeof date === 'string') {
+    // Check for dd-mm-yyyy format
+    const ddmmyyyy = date.match(/^\d{2}-\d{2}-\d{4}$/);
+    if (ddmmyyyy) {
+      const [day, month, year] = date.split('-');
+      dateObj = new Date(Number(year), Number(month) - 1, Number(day));
+    } else {
+      dateObj = new Date(date);
+    }
+  } else {
+    dateObj = new Date(date);
+  }
+
   if (isNaN(dateObj.getTime())) {
     return 'Invalid Date'
   }
-  
+
   const day = dateObj.getDate().toString().padStart(2, '0')
   const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
   const year = dateObj.getFullYear()
-  
+
   return `${day}-${month}-${year}`
 }
 

@@ -21,6 +21,8 @@ import { LineItemsGrid } from "@/components/ui/line-items-grid";
 import { FileUpload } from "@/components/ui/file-upload";
 import type { LineItemFormData } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 // Indian currency formatting function
 const formatIndianCurrency = (amount: number | string) => {
@@ -79,6 +81,23 @@ interface PurchaseRequestFormProps {
   isEditMode?: boolean;
 }
 
+// Helper to parse dd-mm-yyyy to Date
+function parseDDMMYYYY(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const [day, month, year] = dateStr.split("-");
+  if (!day || !month || !year) return null;
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
+// Helper to format Date to dd-mm-yyyy
+function formatToDDMMYYYY(date: Date | null): string {
+  if (!date) return "";
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 export function PurchaseRequestForm({ currentStep, onStepChange, onSubmit, initialData, isEditMode }: PurchaseRequestFormProps) {
   const [lineItems, setLineItems] = useState<LineItemFormData[]>(initialData?.lineItems || []);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -86,6 +105,7 @@ export function PurchaseRequestForm({ currentStep, onStepChange, onSubmit, initi
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const {
     register,
@@ -183,11 +203,31 @@ export function PurchaseRequestForm({ currentStep, onStepChange, onSubmit, initi
 
                 <div>
                   <Label htmlFor="requestDate">Request Date</Label>
-                  <Input
-                    id="requestDate"
-                    type="date"
-                    {...register("requestDate")}
-                  />
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full border rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onClick={() => setCalendarOpen(true)}
+                      >
+                        {getValues("requestDate")
+                          ? formatDate(getValues("requestDate"))
+                          : <span className="text-gray-400">Select date</span>}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="p-0 w-auto">
+                      <Calendar
+                        mode="single"
+                        selected={parseDDMMYYYY(getValues("requestDate"))}
+                        onSelect={(date) => {
+                          setValue("requestDate", formatToDDMMYYYY(date));
+                          setCalendarOpen(false);
+                        }}
+                        fromDate={new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-gray-500 mt-1">Format: dd-mm-yyyy</p>
                   {errors.requestDate && (
                     <p className="text-sm text-destructive mt-1">{errors.requestDate.message}</p>
                   )}

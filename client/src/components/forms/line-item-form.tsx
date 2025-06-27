@@ -13,6 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LOCATIONS, UNITS_OF_MEASURE } from "@/lib/constants";
 import type { LineItemFormData } from "@/lib/types";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { formatDate } from "@/lib/utils";
 
 const lineItemSchema = z.object({
   itemName: z.string().min(1, "Item name is required"),
@@ -61,6 +64,7 @@ export function LineItemForm({ onAddItem }: LineItemFormProps) {
   const [selectedStock, setSelectedStock] = useState<number | null>(null);
   const [quantityDiff, setQuantityDiff] = useState<number | null>(null);
   const [stockError, setStockError] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const {
     register,
@@ -112,6 +116,23 @@ export function LineItemForm({ onAddItem }: LineItemFormProps) {
       setStockError(null);
     }
   };
+
+  // Helper to parse dd-mm-yyyy to Date
+  function parseDDMMYYYY(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const [day, month, year] = dateStr.split("-");
+    if (!day || !month || !year) return null;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  // Helper to format Date to dd-mm-yyyy
+  function formatToDDMMYYYY(date: Date | null): string {
+    if (!date) return "";
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
 
   const onSubmit = (data: LineItemFormData) => {
     if (quantityDiff !== null && quantityDiff <= 0) {
@@ -197,12 +218,31 @@ export function LineItemForm({ onAddItem }: LineItemFormProps) {
 
             <div>
               <Label htmlFor="requiredByDate">Required By Date *</Label>
-              <Input
-                id="requiredByDate"
-                type="date"
-                {...register("requiredByDate")}
-                min={new Date().toISOString().split('T')[0]}
-              />
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full border rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onClick={() => setCalendarOpen(true)}
+                  >
+                    {getValues("requiredByDate")
+                      ? formatDate(getValues("requiredByDate"))
+                      : <span className="text-gray-400">Select date</span>}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="p-0 w-auto">
+                  <Calendar
+                    mode="single"
+                    selected={parseDDMMYYYY(getValues("requiredByDate"))}
+                    onSelect={(date) => {
+                      setValue("requiredByDate", formatToDDMMYYYY(date));
+                      setCalendarOpen(false);
+                    }}
+                    fromDate={new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-gray-500 mt-1">Format: dd-mm-yyyy</p>
               {errors.requiredByDate && (
                 <p className="text-sm text-destructive mt-1">{errors.requiredByDate.message}</p>
               )}

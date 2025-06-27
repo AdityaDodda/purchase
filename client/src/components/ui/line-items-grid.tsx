@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface LineItem {
   id?: number;
@@ -47,6 +49,7 @@ export function LineItemsGrid({ items, onItemsChange, editable = true }: LineIte
     stockAvailable: 0,
     stockLocation: "",
   });
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -210,6 +213,21 @@ export function LineItemsGrid({ items, onItemsChange, editable = true }: LineIte
     return `₹${formatted}.${decimal}`;
   };
 
+  function parseDDMMYYYY(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const [day, month, year] = dateStr.split("-");
+    if (!day || !month || !year) return null;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  function formatToDDMMYYYY(date: Date | null): string {
+    if (!date) return "";
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -339,12 +357,31 @@ export function LineItemsGrid({ items, onItemsChange, editable = true }: LineIte
                 </div>
                 <div>
                   <Label htmlFor="requiredByDate">Required By Date</Label>
-                  <Input
-                    id="requiredByDate"
-                    type="date"
-                    value={formData.requiredByDate}
-                    onChange={(e) => setFormData({...formData, requiredByDate: e.target.value})}
-                  />
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full border rounded px-3 py-2 text-left bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onClick={() => setCalendarOpen(true)}
+                      >
+                        {formData.requiredByDate
+                          ? formatDate(formData.requiredByDate)
+                          : <span className="text-gray-400">Select date</span>}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="p-0 w-auto">
+                      <Calendar
+                        mode="single"
+                        selected={parseDDMMYYYY(formData.requiredByDate)}
+                        onSelect={(date) => {
+                          setFormData({ ...formData, requiredByDate: formatToDDMMYYYY(date) });
+                          setCalendarOpen(false);
+                        }}
+                        fromDate={new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-gray-500 mt-1">Format: dd-mm-yyyy</p>
                 </div>
                 <div>
                   <Label htmlFor="deliveryLocation">Delivery Location</Label>
