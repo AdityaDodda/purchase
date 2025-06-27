@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator,DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 
 export function Navbar() {
   const [, setLocation] = useLocation();
@@ -140,7 +140,7 @@ export function Navbar() {
                             {notification.message}
                           </p>
                           <div className="text-xs text-gray-500">
-                            {formatDate(notification.createdAt)} {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {formatDateTime(notification.createdAt)}
                           </div>
                         </div>
                       </DropdownMenuItem>

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import {
   Accordion,
   AccordionItem,
@@ -91,14 +91,6 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return {
-      date: formatDate(date),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-  };
-
   return (
     <Card className="mt-6">
       <CardHeader>
@@ -112,27 +104,27 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
           onValueChange={setOpenSections}
         >
           <AccordionItem value="comments">
-            <AccordionTrigger>Comments Section</AccordionTrigger>
-            <AccordionContent>
-              {isLoading ? (
-                <div>Loading...</div>
-              ) : comments.length === 0 ? (
-                <div className="text-gray-500">No comments yet.</div>
-              ) : (
-                comments.map((c: ApprovalHistory) => (
-                  <div key={c.id} className="mb-4">
-                    <div className="font-medium">
-                      {(c.approver?.employeeNumber || c.approverEmployeeNumber) +
-                        " - " + (c.approver?.fullName || "Approver")}
-                    </div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      {c.action} on {c.actionDate ? new Date(c.actionDate).toLocaleString() : ""}
-                    </div>
-                    <div className="bg-gray-50 border rounded p-2">{c.comments}</div>
-                  </div>
-                ))
-              )}
-            </AccordionContent>
+          <AccordionTrigger>Comments Section</AccordionTrigger>
+<AccordionContent>
+  {isLoading ? (
+    <div>Loading...</div>
+  ) : comments.length === 0 ? (
+    <div className="text-gray-500">No comments yet.</div>
+  ) : (
+    comments.map((c: ApprovalHistory) => (
+      <div key={c.id} className="mb-4">
+        <div className="font-medium">
+          {c.approver?.fullName || "Approver"}
+        </div>
+        <div className="text-xs text-gray-500 mb-1">
+          {c.action} on {c.actionDate ? formatDate(c.actionDate) : ""}
+        </div>
+        <div className="bg-gray-50 border rounded p-2">{c.comments}</div>
+      </div>
+    ))
+  )}
+</AccordionContent>
+
           </AccordionItem>
           {/* <AccordionItem value="audit">
             <AccordionTrigger>Audit Log</AccordionTrigger>
@@ -147,7 +139,7 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
                     <div>
                       <span className="font-medium">{h.approver?.employeeNumber || h.approverEmployeeNumber} - {h.approver?.fullName || "Approver"}</span>{" "}
                       <span className="text-xs text-gray-500">
-                        (approved at level {h.approvalLevel} on {h.actionDate ? new Date(h.actionDate).toLocaleString() : ""})
+                        (approved at level {h.approvalLevel} on {h.actionDate ? formatDate(h.actionDate) : ""})
                       </span>
                     </div>
                   </div>

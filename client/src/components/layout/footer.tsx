@@ -10,9 +10,9 @@ export function Footer() {
         {/* Left: Company Info */}
         <div>
           <h2 className="text-xl font-bold mb-2">KGBPL</h2>
-          <p className="text-sm leading-snug">
+          {/* <p className="text-sm leading-snug">
             Empowering businesses with seamless solutions.
-          </p>
+          </p> */}
           <div className="mt-2 text-sm space-y-1.5">
             <div className="flex items-center">
               <Mail className="h-4 w-4 mr-2" />

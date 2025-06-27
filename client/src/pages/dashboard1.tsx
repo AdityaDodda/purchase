@@ -471,7 +471,7 @@ function ApprovalAuditLog({ requestId }) {
           history.map((entry, idx) => (
             <div key={idx} className="flex items-center justify-between border-b last:border-b-0 py-1">
               <span>{entry.action} by {entry.approver?.fullName || 'User'} (Level {entry.approvalLevel})</span>
-              <span className="text-gray-500">{new Date(entry.actionDate).toLocaleString()}</span>
+              <span className="text-gray-500">{formatDate(entry.actionDate)}</span>
               {entry.comments && <span className="ml-2 text-gray-700">{entry.comments}</span>}
             </div>
           ))

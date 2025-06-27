@@ -45,9 +45,11 @@ export default function Dashboard() {
   if (activeView === 'approver' && user) {
     queryParams = { currentApproverId: user.id, status: 'pending' };
   } else if (activeView === 'pending') {
-    queryParams = { status: 'pending' };
-  // } else if (activeView === 'all') {
-  //   queryParams = {};
+    if (user?.role === 'approver') {
+      queryParams = { currentApproverId: user.id, status: 'pending' };
+    } else {
+      queryParams = { status: 'pending' };
+    }
   } else if (activeView === 'my') {
     queryParams = { createdBy: user?.id };
   }
@@ -145,11 +147,20 @@ export default function Dashboard() {
         <Card>
           <CardContent>
             <div className="flex space-x-2 mt-6 mb-4">
-              <Button variant={activeView === 'my' ? 'default' : 'outline'} onClick={() => setActiveView('my')}>My Requests</Button>
-              {user?.role === 'approver' && (
-                <Button variant={activeView === 'approver' ? 'default' : 'outline'} onClick={() => setActiveView('approver')}>Approver Inbox</Button>
+              {user?.role === 'approver' ? (
+                <>
+                  <Button variant={activeView === 'my' ? 'default' : 'outline'} onClick={() => setActiveView('my')}>My Requests</Button>
+                  <Button variant={activeView === 'pending' ? 'default' : 'outline'} onClick={() => setActiveView('pending')}>Pending Requests</Button>
+                </>
+              ) : (
+                <>
+                  <Button variant={activeView === 'my' ? 'default' : 'outline'} onClick={() => setActiveView('my')}>My Requests</Button>
+                  {user?.role === 'approver' && (
+                    <Button variant={activeView === 'approver' ? 'default' : 'outline'} onClick={() => setActiveView('approver')}>Approver Inbox</Button>
+                  )}
+                  <Button variant={activeView === 'pending' ? 'default' : 'outline'} onClick={() => setActiveView('pending')}>Pending Requests</Button>
+                </>
               )}
-              <Button variant={activeView === 'pending' ? 'default' : 'outline'} onClick={() => setActiveView('pending')}>Pending Requests</Button>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -375,26 +386,40 @@ export default function Dashboard() {
                     <ApprovalAuditLog requestId={selectedRequest.id} />
                     {/* Approve button for current approver only */}
                     {user && selectedRequest.status === 'pending' && selectedRequest.currentApproverId === user.id && (
-                      <Button
-                        className="mt-4 bg-green-600 hover:bg-green-700 text-white"
-                        onClick={async () => {
-                          const comments = prompt("Enter approval comments (optional):");
-                          try {
-                            await fetch(`/api/purchase-requests/${selectedRequest.id}/approve`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ comments }),
-                              credentials: 'include',
-                            });
-                            alert('Request approved!');
-                            setShowDetailsModal(false);
-                          } catch (e) {
-                            alert('Failed to approve request.');
-                          }
-                        }}
-                      >
-                        Approve
-                      </Button>
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={async () => {
+                            const comments = prompt("Enter approval comments (optional):");
+                            try {
+                              await fetch(`/api/purchase-requests/${selectedRequest.id}/approve`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ comments }),
+                                credentials: 'include',
+                              });
+                              alert('Request approved!');
+                              setShowDetailsModal(false);
+                            } catch (e) {
+                              alert('Failed to approve request.');
+                            }
+                          }}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          className="bg-blue-500 text-white"
+                          onClick={() => alert('Dummy Return action')}
+                        >
+                          Return
+                        </Button>
+                        <Button
+                          className="bg-orange-600 text-white"
+                          onClick={() => alert('Dummy Reject action')}
+                        >
+                          Reject
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -475,7 +500,7 @@ function ApprovalAuditLog({ requestId }: { requestId: number }) {
           safeHistory.map((entry: any, idx: number) => (
             <div key={idx} className="flex items-center justify-between border-b last:border-b-0 py-1">
               <span>{entry.action} by {entry.approver?.fullName || 'User'} (Level {entry.approvalLevel})</span>
-              <span className="text-gray-500">{new Date(entry.actionDate).toLocaleString()}</span>
+              <span className="text-gray-500">{formatDate(entry.actionDate)}</span>
               {entry.comments && <span className="ml-2 text-gray-700">{entry.comments}</span>}
             </div>
           ))
