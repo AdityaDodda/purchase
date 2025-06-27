@@ -528,7 +528,7 @@ export default function MyRequests() {
   );
 }
 
-function ApprovalProgress({ request }) {
+export function ApprovalProgress({ request }) {
   const { data: workflow } = useQuery({
     queryKey: ["/api/approval-workflow", request.department, request.location],
     enabled: !!request,

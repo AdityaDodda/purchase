@@ -91,6 +91,7 @@ export interface ApprovalHistory {
   approvalLevel: number;
   actionDate?: string;
   approver?: User;
+  approverEmployeeNumber?: string;
 }
 
 export interface Notification {

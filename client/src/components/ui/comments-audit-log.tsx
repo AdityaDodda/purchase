@@ -63,8 +63,7 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
     ? (history as ApprovalHistory[]).filter(
         (h) =>
           h.comments &&
-          h.comments.trim() !== "" &&
-          h.approvalLevel === 2
+          h.comments.trim() !== ""
       )
     : [];
   // Audit log: only 'approved' actions
@@ -113,7 +112,7 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
           onValueChange={setOpenSections}
         >
           <AccordionItem value="comments">
-            <AccordionTrigger>Comments for Next Approver/Requester</AccordionTrigger>
+            <AccordionTrigger>Comments Section</AccordionTrigger>
             <AccordionContent>
               {isLoading ? (
                 <div>Loading...</div>
@@ -123,7 +122,8 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
                 comments.map((c: ApprovalHistory) => (
                   <div key={c.id} className="mb-4">
                     <div className="font-medium">
-                      {c.approver?.employeeNumber} - {c.approver?.fullName || "Approver"}
+                      {(c.approver?.employeeNumber || c.approverEmployeeNumber) +
+                        " - " + (c.approver?.fullName || "Approver")}
                     </div>
                     <div className="text-xs text-gray-500 mb-1">
                       {c.action} on {c.actionDate ? new Date(c.actionDate).toLocaleString() : ""}
@@ -134,7 +134,7 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
               )}
             </AccordionContent>
           </AccordionItem>
-          <AccordionItem value="audit">
+          {/* <AccordionItem value="audit">
             <AccordionTrigger>Audit Log</AccordionTrigger>
             <AccordionContent>
               {isLoading ? (
@@ -145,7 +145,7 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
                 auditLog.map((h: ApprovalHistory) => (
                   <div key={h.id} className="mb-3">
                     <div>
-                      <span className="font-medium">{h.approver?.employeeNumber} - {h.approver?.fullName || "Approver"}</span>{" "}
+                      <span className="font-medium">{h.approver?.employeeNumber || h.approverEmployeeNumber} - {h.approver?.fullName || "Approver"}</span>{" "}
                       <span className="text-xs text-gray-500">
                         (approved at level {h.approvalLevel} on {h.actionDate ? new Date(h.actionDate).toLocaleString() : ""})
                       </span>
@@ -154,7 +154,7 @@ export function CommentsAuditLog({ purchaseRequestId, canComment = true }: Comme
                 ))
               )}
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> */}
         </Accordion>
       </CardContent>
     </Card>

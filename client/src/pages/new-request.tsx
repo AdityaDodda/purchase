@@ -40,7 +40,7 @@ export default function NewRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/purchase-requests"] });
       setCurrentStep(1);
-      setLocation("/my-requests");
+      setLocation("/");
     },
     onError: (error: any) => {
       alert(error.message || "Failed to create request");

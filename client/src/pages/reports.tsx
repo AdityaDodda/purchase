@@ -21,6 +21,7 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 import { CommentsAuditLog } from "@/components/ui/comments-audit-log";
+import { ApprovalProgress } from "./my-requests";
 
 import { DEPARTMENTS, LOCATIONS, REQUEST_STATUSES } from "@/lib/constants";
 

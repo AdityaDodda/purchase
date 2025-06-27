@@ -244,6 +244,7 @@ export function registerRoutes(app: Express): Server {
         totalEstimatedCost: req.body.totalEstimatedCost || "0",
         requisitionNumber, // Add the generated requisition number
         currentApproverId: firstApprover.approverId,
+        currentApproverEmployeeNumber: firstApprover.approverEmployeeNumber,
         currentApprovalLevel: 1,
         status: 'pending', // Ensure status is set to pending
       };
@@ -365,14 +366,8 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Purchase request not found" });
       }
 
-      // Allow requester, admin, or current approver to view
-      if (
-        request.requesterId !== req.session.user.id &&
-        req.session.user.role !== 'admin' &&
-        request.currentApproverId !== req.session.user.id
-      ) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
+      // Allow all authenticated users to view details for reporting
+      // (previously restricted to requester, admin, or current approver)
 
       // Fetch line items
       const lineItems = await storage.getLineItemsByRequest(id);
@@ -410,6 +405,7 @@ export function registerRoutes(app: Express): Server {
         ...req.body,
         status: 'pending',
         currentApproverId: firstApprover.approverId,
+        currentApproverEmployeeNumber: firstApprover.approverEmployeeNumber,
         currentApprovalLevel: 1,
       });
       // Create notification for the new approver
@@ -595,9 +591,19 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "You are not authorized to approve this request at this stage." });
       }
       // Log approval action
+      const approver = await storage.getUser(req.session.user.id);
+      console.log("Logging approval history:", {
+        purchaseRequestId: id,
+        approverId: req.session.user.id,
+        approverEmployeeNumber: approver.employeeNumber,
+        action: 'approve',
+        comments,
+        approvalLevel: request.currentApprovalLevel,
+      });
       await storage.createApprovalHistory({
         purchaseRequestId: id,
         approverId: req.session.user.id,
+        approverEmployeeNumber: approver.employeeNumber,
         action: 'approve',
         comments,
         approvalLevel: request.currentApprovalLevel,
@@ -613,6 +619,7 @@ export function registerRoutes(app: Express): Server {
         await storage.updatePurchaseRequest(id, {
           status: 'pending',
           currentApproverId: nextApprover.approverId,
+          currentApproverEmployeeNumber: nextApprover.approverEmployeeNumber,
           currentApprovalLevel: nextLevel,
         });
         // Notify next approver
@@ -629,6 +636,7 @@ export function registerRoutes(app: Express): Server {
         await storage.updatePurchaseRequest(id, {
           status: 'approved',
           currentApproverId: null,
+          currentApproverEmployeeNumber: null,
           currentApprovalLevel: request.currentApprovalLevel,
         });
         // Notify requester
@@ -658,9 +666,19 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Log rejection
+      const approver = await storage.getUser(req.session.user.id);
+      console.log("Logging approval history:", {
+        purchaseRequestId: id,
+        approverId: req.session.user.id,
+        approverEmployeeNumber: approver.employeeNumber,
+        action: 'reject',
+        comments,
+        approvalLevel: request.currentApprovalLevel,
+      });
       await storage.createApprovalHistory({
         purchaseRequestId: id,
         approverId: req.session.user.id,
+        approverEmployeeNumber: approver.employeeNumber,
         action: 'reject',
         comments,
         approvalLevel: request.currentApprovalLevel,
@@ -670,6 +688,7 @@ export function registerRoutes(app: Express): Server {
       await storage.updatePurchaseRequest(id, {
         status: 'rejected',
         currentApproverId: null,
+        currentApproverEmployeeNumber: null,
       });
 
       // Notify requester
@@ -700,9 +719,19 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Log return
+      const approver = await storage.getUser(req.session.user.id);
+      console.log("Logging approval history:", {
+        purchaseRequestId: id,
+        approverId: req.session.user.id,
+        approverEmployeeNumber: approver.employeeNumber,
+        action: 'return',
+        comments,
+        approvalLevel: request.currentApprovalLevel,
+      });
       await storage.createApprovalHistory({
         purchaseRequestId: id,
         approverId: req.session.user.id,
+        approverEmployeeNumber: approver.employeeNumber,
         action: 'return',
         comments,
         approvalLevel: request.currentApprovalLevel,
@@ -712,6 +741,7 @@ export function registerRoutes(app: Express): Server {
       await storage.updatePurchaseRequest(id, {
         status: 'returned',
         currentApproverId: null,
+        currentApproverEmployeeNumber: null,
         currentApprovalLevel: 1,
       });
 
