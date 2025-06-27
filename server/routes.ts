@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { sendPasswordResetEmail } from "./email";
+import { sendPasswordResetEmail, sendPurchaseRequestToApprovers } from "./email";
 
 // Configure multer for file uploads
 const uploadDir = "uploads";
@@ -49,6 +49,14 @@ const upload = multer({
     }
   }
 });
+
+// Helper to parse dd-mm-yyyy to Date
+function parseDDMMYYYY(dateStr) {
+  if (!dateStr) return null;
+  const [day, month, year] = dateStr.split("-");
+  if (!day || !month || !year) return null;
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}
 
 export function registerRoutes(app: Express): Server {
   // Authentication middleware
@@ -276,6 +284,20 @@ export function registerRoutes(app: Express): Server {
         type: "success",
       });
 
+      // After creating the new request
+      const approvers = await storage.getApproversByDepartmentLocation(validatedData.department, validatedData.location);
+      const approverEmails = approvers.map(a => a.email).filter(Boolean);
+      if (approverEmails.length > 0) {
+        const approvalLink = `http://${req.headers.host}/purchase-requests/${newRequest.id}`;
+        await sendPurchaseRequestToApprovers(
+          approverEmails,
+          requisitionNumber,
+          validatedData.department,
+          validatedData.location,
+          approvalLink
+        );
+      }
+
       res.json(newRequest);
     } catch (error: any) {
       console.error("Create purchase request error:", error);
@@ -436,7 +458,7 @@ export function registerRoutes(app: Express): Server {
         purchaseRequestId,
         requiredQuantity: typeof req.body.requiredQuantity === 'string' ? parseInt(req.body.requiredQuantity) : req.body.requiredQuantity,
         estimatedCost: typeof req.body.estimatedCost === 'number' ? req.body.estimatedCost.toString() : req.body.estimatedCost,
-        requiredByDate: req.body.requiredByDate ? new Date(req.body.requiredByDate + 'T00:00:00') : new Date(),
+        requiredByDate: req.body.requiredByDate ? parseDDMMYYYY(req.body.requiredByDate) : new Date(),
         stockAvailable: req.body.stockAvailable ? 
           (typeof req.body.stockAvailable === 'string' ? parseInt(req.body.stockAvailable) : req.body.stockAvailable) : 0,
       };
@@ -509,7 +531,7 @@ export function registerRoutes(app: Express): Server {
         ...req.body,
         requiredQuantity: typeof req.body.requiredQuantity === 'string' ? parseInt(req.body.requiredQuantity) : req.body.requiredQuantity,
         estimatedCost: typeof req.body.estimatedCost === 'number' ? req.body.estimatedCost.toString() : req.body.estimatedCost,
-        requiredByDate: req.body.requiredByDate ? new Date(req.body.requiredByDate + 'T00:00:00') : new Date(),
+        requiredByDate: req.body.requiredByDate ? parseDDMMYYYY(req.body.requiredByDate) : new Date(),
         stockAvailable: req.body.stockAvailable ? 
           (typeof req.body.stockAvailable === 'string' ? parseInt(req.body.stockAvailable) : req.body.stockAvailable) : 0,
       };

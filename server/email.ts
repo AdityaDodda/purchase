@@ -44,3 +44,35 @@ export async function sendPasswordResetEmail(to: string, resetLink: string) {
     console.error("Error sending password reset email:", error);
   }
 }
+
+export async function sendPurchaseRequestToApprovers(emails: string[], requisitionNumber: string, department: string, location: string, approvalLink: string) {
+  const mailOptions = {
+    from: `"Purchase Request System" <${EMAIL_USER}>`,
+    to: emails.join(","),
+    subject: `Approval Needed: Purchase Request ${requisitionNumber}`,
+    html: `
+      <p>A new purchase request <b>${requisitionNumber}</b> has been submitted for your approval.</p>
+      <p><b>Department:</b> ${department}<br/>
+         <b>Location:</b> ${location}</p>
+      <p>Please review and take action using the link below:</p>
+      <a href="${approvalLink}">${approvalLink}</a>
+      <p>This is an automated message. Please do not reply.</p>
+    `,
+  };
+
+  if (!EMAIL_USER || !EMAIL_PASS) {
+    console.log("--- Email not sent. Credentials missing. ---");
+    console.log("To:", emails);
+    console.log("Subject:", mailOptions.subject);
+    console.log("Body:", mailOptions.html);
+    console.log("---------------------------------------------");
+    return;
+  }
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Purchase request submission email sent to:", emails);
+  } catch (error) {
+    console.error("Error sending purchase request submission email:", error);
+  }
+}
